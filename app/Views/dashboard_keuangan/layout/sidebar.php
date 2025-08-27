@@ -69,6 +69,23 @@
                 </ul>
             </div>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="collapse" href="#masterdata" role="button" aria-expanded="false" aria-controls="masterdata">
+
+                <i class="fas fa-database me-2"></i>
+
+                Master Data
+
+                <i class="fas fa-angle-left ms-auto"></i>
+
+            </a>
+            <div class="collapse" id="masterdata">
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="<?= site_url('master-kategori'); ?>">Kategori Pengeluaran</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= site_url('master-kategori/new'); ?>">Pendapatan</a></li>
+                </ul>
+            </div>
+        </li>
     </ul>
 
     <div class="sidebar-footer">

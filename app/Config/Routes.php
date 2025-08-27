@@ -36,4 +36,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/neraca-keuangan', 'NeracaKeuangan::index');
     $routes->get('/neraca-keuangan/new', 'NeracaKeuangan::new');
     $routes->get('/neraca-keuangan/detail/(:num)', 'NeracaKeuangan::detail/$1');
+    // Rute untuk Master Kategori Pengeluaran
+    $routes->resource('master-kategori', ['controller' => 'MasterKategori']);
+    $routes->resource('master-pendapatan', ['controller' => 'MasterPendapatan']); // Untuk nanti
+    // Rute untuk AJAX check nama kategori
+    $routes->get('/master-kategori/check-nama', 'MasterKategori::checkNama');
 });
