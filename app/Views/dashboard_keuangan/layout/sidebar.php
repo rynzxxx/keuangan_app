@@ -82,7 +82,7 @@
             <div class="collapse" id="masterdata">
                 <ul class="nav flex-column">
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('master-kategori'); ?>">Kategori Pengeluaran</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?= site_url('master-kategori/new'); ?>">Pendapatan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= site_url('master-pendapatan'); ?>">Pendapatan</a></li>
                 </ul>
             </div>
         </li>
