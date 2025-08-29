@@ -17,9 +17,8 @@ $routes->get('/logout', 'Auth::logout');
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/dashboard_keuangan/dashboard', 'Dashboard::index');
     // Rute untuk BKU Bulanan
-    $routes->get('/bku-bulanan', 'BkuBulanan::index');
-    $routes->get('/bku-bulanan/new', 'BkuBulanan::new');
     $routes->get('/bku-bulanan/detail/(:num)', 'BkuBulanan::detail/$1');
+    $routes->resource('bku-bulanan', ['controller' => 'BkuBulanan', 'except' => 'show']);
     // Rute untuk BKU Tahunan
     $routes->get('/bku-tahunan', 'BkuTahunan::index');
     $routes->get('/bku-tahunan/new', 'BkuTahunan::new');
@@ -44,4 +43,13 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->resource('master-pendapatan', ['controller' => 'MasterPendapatan']);
     // Rute untuk AJAX check nama pendapatan
     $routes->get('/master-pendapatan/check-nama', 'MasterPendapatan::checkNama');
+    // Rute untuk ekspor BKU Bulanan pdf
+    $routes->get('/bku-bulanan/cetak-pdf/(:num)', 'BkuBulanan::cetakPdf/$1');
+    // Rute untuk ekspor BKU Bulanan ke Excel
+    $routes->get('/bku-bulanan/cetak-excel/(:num)', 'BkuBulanan::cetakExcel/$1');
+    // Rute untuk mendapatkan saldo bulan lalu via AJAX
+    $routes->get('/bku-bulanan/get-saldo-lalu', 'BkuBulanan::getSaldoBulanLalu');
+    // Rute untuk Pengaturan Laporan
+    $routes->get('/pengaturan', 'Pengaturan::index', ['filter' => 'auth']);
+    $routes->post('/pengaturan/update', 'Pengaturan::update', ['filter' => 'auth']);
 });

@@ -26,6 +26,8 @@ class BkuBulananModel extends Model
     protected $allowedFields    = [
         'bulan',
         'tahun',
+        'saldo_bulan_lalu',
+        'penghasilan_bulan_ini',
         'total_pendapatan',
         'total_pengeluaran',
         'saldo_akhir'
