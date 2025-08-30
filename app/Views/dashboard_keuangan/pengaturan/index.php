@@ -21,17 +21,32 @@
 
                 <div class="mb-3">
                     <label for="lokasi_laporan" class="form-label">Lokasi Laporan</label>
-                    <input type="text" class="form-control" id="lokasi_laporan" name="lokasi_laporan" value="<?= esc($lokasi_laporan); ?>" placeholder="Contoh: Melung">
+                    <input type="text" class="form-control" id="lokasi_laporan" name="lokasi_laporan" value="<?= esc($pengaturan['lokasi_laporan'] ?? ''); ?>" placeholder="Contoh: Melung">
+                </div>
+
+                <div class="mb-3">
+                    <label for="kepala_desa" class="form-label">Nama Kepala Desa</label>
+                    <input type="text" class="form-control" id="kepala_desa" name="kepala_desa" value="<?= esc($pengaturan['kepala_desa'] ?? ''); ?>" placeholder="Contoh: KHOERUDIN S. Sos">
+                </div>
+
+                <div class="mb-3">
+                    <label for="penasihat" class="form-label">Nama Penasihat</label>
+                    <input type="text" class="form-control" id="penasihat" name="penasihat" value="<?= esc($pengaturan['penasihat'] ?? ''); ?>" placeholder="Contoh: KHOERUDIN">
+                </div>
+
+                <div class="mb-3">
+                    <label for="pengawas" class="form-label">Nama Pengawas</label>
+                    <input type="text" class="form-control" id="pengawas" name="pengawas" value="<?= esc($pengaturan['pengawas'] ?? ''); ?>" placeholder="Contoh: SUDARSO">
                 </div>
 
                 <div class="mb-3">
                     <label for="ketua_bumdes" class="form-label">Nama Ketua BUMDES</label>
-                    <input type="text" class="form-control" id="ketua_bumdes" name="ketua_bumdes" value="<?= esc($ketua_bumdes); ?>" placeholder="Contoh: Kartim">
+                    <input type="text" class="form-control" id="ketua_bumdes" name="ketua_bumdes" value="<?= esc($pengaturan['ketua_bumdes'] ?? ''); ?>" placeholder="Contoh: KARTIM">
                 </div>
 
                 <div class="mb-3">
                     <label for="bendahara_bumdes" class="form-label">Nama Bendahara BUMDES</label>
-                    <input type="text" class="form-control" id="bendahara_bumdes" name="bendahara_bumdes" value="<?= esc($bendahara_bumdes); ?>" placeholder="Contoh: Rustiani">
+                    <input type="text" class="form-control" id="bendahara_bumdes" name="bendahara_bumdes" value="<?= esc($pengaturan['bendahara_bumdes'] ?? ''); ?>" placeholder="Contoh: RUSTIANI">
                 </div>
 
                 <div class="d-flex justify-content-end">

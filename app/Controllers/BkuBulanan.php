@@ -19,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use App\Models\LogAktivitasModel;
 
 
 class BkuBulanan extends BaseController
@@ -36,6 +37,20 @@ class BkuBulanan extends BaseController
         ];
 
         return view('dashboard_keuangan/bku_bulanan/index', $data);
+    }
+
+    /**
+     * Helper method untuk mencatat aktivitas
+     */
+    private function logAktivitas($aktivitas, $deskripsi, $bku_id = null)
+    {
+        $logModel = new LogAktivitasModel();
+        $logModel->save([
+            'username'  => session()->get('username') ?? 'System', // Ambil username dari session
+            'aktivitas' => $aktivitas,
+            'deskripsi' => $deskripsi,
+            'bku_id'    => $bku_id
+        ]);
     }
 
 
@@ -369,6 +384,11 @@ class BkuBulanan extends BaseController
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
 
+        // Tambahan: Atur tinggi baris header agar teks tidak terpotong
+        $sheet->getRowDimension($headerRow)->setRowHeight(30);
+        $sheet->getRowDimension($subHeaderRow1)->setRowHeight(30);
+        $sheet->getRowDimension($subHeaderRow2)->setRowHeight(30);
+
         // 9. Siapkan nama file dan download (Tidak ada perubahan)
         $filename = 'BKU_Bulanan_' . $namaBulan . '_' . $laporan['tahun'] . '.xlsx';
         $writer = new Xlsx($spreadsheet);
@@ -430,10 +450,14 @@ class BkuBulanan extends BaseController
      */
     public function delete($id = null)
     {
+        $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
         $bkuModel = new BkuBulananModel();
 
         $data = $bkuModel->find($id);
         if ($data) {
+            // Catat log sebelum data hilang
+            $namaBulan = $bulanIndonesia[(int)$data['bulan']];
+            $this->logAktivitas('MENGHAPUS', "Menghapus laporan BKU periode {$namaBulan} {$data['tahun']}", $id);
             $bkuModel->delete($id);
             session()->setFlashdata('success', 'Data laporan berhasil dihapus.');
         } else {
@@ -502,6 +526,7 @@ class BkuBulanan extends BaseController
 
     public function create()
     {
+        $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
         // 1. Validasi Input Dasar
         $validation = \Config\Services::validation();
         $validation->setRules([
@@ -625,6 +650,8 @@ class BkuBulanan extends BaseController
             }
 
             $db->transCommit();
+            $namaBulan = $bulanIndonesia[(int)$bulan];
+            $this->logAktivitas('MEMBUAT', "Membuat laporan BKU untuk periode {$namaBulan} {$tahun}", $bkuId);
             return redirect()->to('/bku-bulanan')->with('success', 'Laporan BKU berhasil dibuat!');
         } catch (\Exception $e) {
             $db->transRollback();
@@ -674,6 +701,7 @@ class BkuBulanan extends BaseController
 
     public function update($id = null)
     {
+        $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
         if (!$this->validate(['pendapatan' => 'required'])) {
             return redirect()->back()->withInput()->with('error', 'Minimal harus ada satu baris pendapatan.');
         }
@@ -764,6 +792,9 @@ class BkuBulanan extends BaseController
             }
 
             $db->transCommit();
+            $laporan = $bkuModel->find($id); // Ambil data untuk deskripsi log
+            $namaBulan = $bulanIndonesia[(int)$laporan['bulan']];
+            $this->logAktivitas('MENGUPDATE', "Memperbarui laporan BKU untuk periode {$namaBulan} {$laporan['tahun']}", $id);
             return redirect()->to('/bku-bulanan/detail/' . $id)->with('success', 'Laporan BKU berhasil diperbarui!');
         } catch (\Exception $e) {
             $db->transRollback();

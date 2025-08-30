@@ -17,12 +17,15 @@ class Pengaturan extends BaseController
 
     public function index()
     {
-        // Ambil setiap pengaturan dari database
+        $pengaturan = $this->pengaturanModel->findAll();
+        $dataPengaturan = [];
+        foreach ($pengaturan as $item) {
+            $dataPengaturan[$item['meta_key']] = $item['meta_value'];
+        }
+
         $data = [
             'title' => 'Pengaturan Laporan',
-            'ketua_bumdes' => $this->pengaturanModel->where('meta_key', 'ketua_bumdes')->first()['meta_value'] ?? '',
-            'bendahara_bumdes' => $this->pengaturanModel->where('meta_key', 'bendahara_bumdes')->first()['meta_value'] ?? '',
-            'lokasi_laporan' => $this->pengaturanModel->where('meta_key', 'lokasi_laporan')->first()['meta_value'] ?? '',
+            'pengaturan' => $dataPengaturan
         ];
         return view('dashboard_keuangan/pengaturan/index', $data);
     }
@@ -30,11 +33,8 @@ class Pengaturan extends BaseController
     public function update()
     {
         // Ambil data dari form
-        $dataToUpdate = [
-            'ketua_bumdes' => $this->request->getPost('ketua_bumdes'),
-            'bendahara_bumdes' => $this->request->getPost('bendahara_bumdes'),
-            'lokasi_laporan' => $this->request->getPost('lokasi_laporan'),
-        ];
+        // Ambil semua data dari form
+        $dataToUpdate = $this->request->getPost();
 
         // Loop dan update setiap pengaturan
         foreach ($dataToUpdate as $key => $value) {

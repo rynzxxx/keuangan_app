@@ -18,6 +18,7 @@
                 <ul class="nav flex-column">
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('bku-bulanan'); ?>">Lihat Data</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('bku-bulanan/new'); ?>">Tambah Baru</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= site_url('/history'); ?>">Log Aktivitas</a></li>
                 </ul>
             </div>
         </li>

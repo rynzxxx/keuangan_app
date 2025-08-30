@@ -16,6 +16,7 @@ $routes->get('/logout', 'Auth::logout');
 // Grup rute yang dilindungi filter otentikasi
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/dashboard_keuangan/dashboard', 'Dashboard::index');
+    $routes->get('/dashboard', 'Dashboard::index');
     // Rute untuk BKU Bulanan
     $routes->get('/bku-bulanan/detail/(:num)', 'BkuBulanan::detail/$1');
     $routes->resource('bku-bulanan', ['controller' => 'BkuBulanan', 'except' => 'show']);
@@ -52,4 +53,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     // Rute untuk Pengaturan Laporan
     $routes->get('/pengaturan', 'Pengaturan::index', ['filter' => 'auth']);
     $routes->post('/pengaturan/update', 'Pengaturan::update', ['filter' => 'auth']);
+    // Rute untuk ekspor BKU Tahunan pdf dan excel
+    $routes->get('/bku-tahunan/cetak-pdf/(:num)', 'BkuTahunan::cetakPdf/$1');
+    $routes->get('/bku-tahunan/cetak-excel/(:num)', 'BkuTahunan::cetakExcel/$1');
+    // Rute untuk History Aktivitas
+    $routes->get('/history', 'History::index', ['filter' => 'auth']);
 });
