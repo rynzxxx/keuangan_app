@@ -34,8 +34,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/laporan-perubahan-modal/detail/(:num)', 'LaporanPerubahanModal::detail/$1');
     // Rute untuk Neraca Keuangan
     $routes->get('/neraca-keuangan', 'NeracaKeuangan::index');
-    $routes->get('/neraca-keuangan/new', 'NeracaKeuangan::new');
-    $routes->get('/neraca-keuangan/detail/(:num)', 'NeracaKeuangan::detail/$1');
+    $routes->post('/neraca-keuangan/simpan', 'NeracaKeuangan::simpan');
+    $routes->get('/neraca-keuangan/cetak-pdf/(:num)', 'NeracaKeuangan::cetakPdf/$1');
+    $routes->get('/neraca-keuangan/cetak-excel/(:num)', 'NeracaKeuangan::cetakExcel/$1');
     // Rute untuk Master Kategori Pengeluaran
     $routes->resource('master-kategori', ['controller' => 'MasterKategori']);
     // Rute untuk AJAX check nama kategori
@@ -58,4 +59,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/bku-tahunan/cetak-excel/(:num)', 'BkuTahunan::cetakExcel/$1');
     // Rute untuk History Aktivitas
     $routes->get('/history', 'History::index', ['filter' => 'auth']);
+    // Rute untuk Master Neraca
+    // $routes->resource('master-neraca');
+    $routes->resource('master-neraca', ['controller' => 'MasterNeraca']);
 });

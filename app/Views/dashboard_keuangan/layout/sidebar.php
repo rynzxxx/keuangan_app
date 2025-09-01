@@ -85,7 +85,7 @@
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('master-kategori'); ?>">Kategori Pengeluaran</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('master-pendapatan'); ?>">Pendapatan</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= site_url('pengaturan'); ?>">Pengaturan tandatangan</a></li>
-
+                    <li class="nav-item"><a class="nav-link" href="<?= site_url('master-neraca'); ?>">Komponen Neraca</a></li>
                 </ul>
             </div>
         </li>

@@ -1,166 +1,297 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 
 <head>
     <meta charset="UTF-8">
-    <title>Laporan BKU Bulanan</title>
+    <title>Laporan BKU Bulanan - <?= $namaBulan . ' ' . $laporan['tahun']; ?></title>
     <style>
         body {
-            font-family: 'Helvetica', sans-serif;
-            font-size: 12px;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9px;
             color: #333;
         }
 
-        .table {
-            width: 100%;
-            border-collapse: collapse;
+        .header-section {
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .table th,
-        .table td {
-            border: 1px solid #999;
-            padding: 8px;
+        .header-section p {
+            margin: 0;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .header-section .sub-header {
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 3px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            white-space: pre-line;
+            /* Agar ganti baris dengan \n bekerja */
+        }
+
+        .text-left {
             text-align: left;
         }
 
-        .table th {
-            background-color: #f2f2f2;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .text-end {
+        .text-right {
             text-align: right;
         }
 
-        .text-center {
-            text-align: center;
-        }
-
-        .fw-bold {
+        .font-bold {
             font-weight: bold;
         }
 
-        h2,
-        h3 {
+        .footer-section {
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .signature-block {
+            width: 40%;
+            float: left;
             text-align: center;
-            margin: 5px 0;
         }
 
-        h3 {
-            margin-bottom: 15px;
+        .signature-block.right {
+            float: right;
         }
 
-        h4 {
-            margin-top: 20px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
+        .signature-space {
+            height: 50px;
         }
 
-        .mb-4 {
-            margin-bottom: 1.5rem;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: .35em .65em;
-            font-size: .75em;
-            font-weight: 700;
-            line-height: 1;
-            color: #fff;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: .25rem;
-            background-color: #6c757d;
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
     </style>
 </head>
 
 <body>
-    <h2>LAPORAN BUKU KAS UMUM (BKU) BULANAN</h2>
-    <h3>PERIODE: <?= strtoupper(date('F Y', mktime(0, 0, 0, $laporan['bulan'], 1))); ?></h3>
 
-    <h4>A. Ringkasan Keuangan</h4>
-    <table class="table mb-4">
-        <thead>
-            <tr>
-                <th>Total Pendapatan</th>
-                <th>Total Pengeluaran</th>
-                <th>Saldo Akhir</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="text-end">Rp <?= number_format($laporan['total_pendapatan'], 0, ',', '.'); ?></td>
-                <td class="text-end">Rp <?= number_format($laporan['total_pengeluaran'], 0, ',', '.'); ?></td>
-                <td class="text-end fw-bold">Rp <?= number_format($laporan['saldo_akhir'], 0, ',', '.'); ?></td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="header-section">
+        <p>BUKU KAS UMUM BADAN USAHA MILIK DESA</p>
+        <p class="sub-header">*BUMDES ALAM LESTARI*</p>
+        <p>DESA MELUNG KECAMATAN KEDUNGBANTENG</p>
+        <p>KABUPATEN BANYUMAS</p>
+        <p>PERIODE: <?= strtoupper($namaBulan . ' ' . $laporan['tahun']); ?></p>
+    </div>
 
-    <h4>B. Rincian Alokasi & Realisasi Dana</h4>
-    <table class="table mb-4">
+    <table>
         <thead>
+            <?php
+            // Cek apakah ada kategori yang punya anak, untuk menentukan tinggi header (2 atau 3 baris)
+            $hasChildren = false;
+            foreach ($kategoriHierarki as $parentKat) {
+                if (!empty($parentKat['children'])) {
+                    $hasChildren = true;
+                    break;
+                }
+            }
+            $headerRowCount = $hasChildren ? 3 : 2;
+            ?>
+
             <tr>
-                <th>Kategori</th>
-                <th class="text-center">Persentase</th>
-                <th class="text-end">Alokasi Dana</th>
-                <th class="text-end">Realisasi</th>
-                <th class="text-end">Sisa Alokasi</th>
+                <th rowspan="<?= $headerRowCount; ?>">NO</th>
+                <th rowspan="<?= $headerRowCount; ?>">TANGGAL</th>
+                <th rowspan="<?= $headerRowCount; ?>">URAIAN</th>
+                <th rowspan="<?= $headerRowCount; ?>">PENDAPATAN</th>
+                <th colspan="<?= $totalKolomPengeluaran; ?>">PENGELUARAN</th>
+                <th rowspan="<?= $headerRowCount; ?>">KOMULATIF PENGELUARAN</th>
+                <th rowspan="<?= $headerRowCount; ?>">SALDO</th>
             </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($rincianAlokasi as $a): ?>
+
+            <tr>
+                <?php foreach ($kategoriHierarki as $parentKat) : ?>
+                    <?php
+                    $childCount = count($parentKat['children']);
+                    $colspan = ($childCount > 0) ? $childCount : 1;
+                    // Jika tidak punya anak, maka rowspan-nya 2 (gabung ke baris bawah)
+                    // Jika punya anak, rowspan-nya 1 (karena baris bawah diisi oleh anak)
+                    $rowspan = ($childCount > 0) ? 1 : 2;
+                    ?>
+                    <th colspan="<?= $colspan; ?>" rowspan="<?= $rowspan; ?>">
+                        <?= strtoupper($parentKat['nama_kategori']); ?> <?= $parentKat['persentase']; ?>%
+                    </th>
+                <?php endforeach; ?>
+            </tr>
+
+            <?php if ($hasChildren) : ?>
                 <tr>
-                    <td><?= esc($a['nama_kategori']); ?></td>
-                    <td class="text-center"><?= number_format($a['persentase_saat_itu'], 2); ?>%</td>
-                    <td class="text-end">Rp <?= number_format($a['jumlah_alokasi'], 0, ',', '.'); ?></td>
-                    <td class="text-end">Rp <?= number_format($a['jumlah_realisasi'], 0, ',', '.'); ?></td>
-                    <td class="text-end fw-bold">Rp <?= number_format($a['sisa_alokasi'], 0, ',', '.'); ?></td>
+                    <?php foreach ($kategoriHierarki as $parentKat) : ?>
+                        <?php if (!empty($parentKat['children'])) : ?>
+                            <?php foreach ($parentKat['children'] as $childKat) : ?>
+                                <th>
+                                    <?= strtoupper($childKat['nama_kategori']); ?> <?= $childKat['persentase']; ?>%
+                                </th>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </tr>
+            <?php endif; ?>
+
+        </thead>
+        <tbody>
+            <?php
+            $nomor = 1;
+            $saldo = (float)$laporan['saldo_bulan_lalu'];
+            $komulatifPengeluaran = 0;
+            ?>
+            <tr>
+                <td><?= $nomor++; ?></td>
+                <td></td>
+                <td class="text-left">Sisa Saldo Bulan Lalu</td>
+                <td class="text-right"><?= number_format($laporan['saldo_bulan_lalu'], 0, ',', '.'); ?></td>
+                <td colspan="<?= $totalKolomPengeluaran; ?>"></td>
+                <td></td>
+                <td class="text-right"><?= number_format($saldo, 0, ',', '.'); ?></td>
+            </tr>
+
+            <?php foreach ($rincianPendapatan as $p) : ?>
+                <?php $saldo += (float)$p['jumlah']; ?>
+                <tr>
+                    <td><?= $nomor++; ?></td>
+                    <td><?= date('d-m-Y', strtotime($p['created_at'])); ?></td>
+                    <td class="text-left"><?= $p['nama_pendapatan']; ?></td>
+                    <td class="text-right"><?= number_format($p['jumlah'], 0, ',', '.'); ?></td>
+                    <td colspan="<?= $totalKolomPengeluaran; ?>"></td>
+                    <td></td>
+                    <td class="text-right"><?= number_format($saldo, 0, ',', '.'); ?></td>
+                </tr>
+            <?php endforeach; ?>
+
+            <tr class="font-bold">
+                <td></td>
+                <td></td>
+                <td class="text-left">Total Pendapatan Bulan Ini</td>
+                <td class="text-right"><?= number_format($laporan['total_pendapatan'], 0, ',', '.'); ?></td>
+                <?php
+                $alokasiCols = array_fill(1, $totalKolomPengeluaran, '');
+                foreach ($rincianAlokasi as $alokasi) {
+                    $colIndex = $kategoriColumnMap[$alokasi['master_kategori_id']] ?? null;
+                    if ($colIndex) {
+                        $alokasiCols[$colIndex] = number_format($alokasi['jumlah_alokasi'], 0, ',', '.');
+                    }
+                }
+                ?>
+                <?php foreach ($alokasiCols as $nilai) : ?>
+                    <td class="text-right"><?= $nilai; ?></td>
+                <?php endforeach; ?>
+                <td></td>
+                <td class="text-right"><?= number_format($saldo, 0, ',', '.'); ?></td>
+            </tr>
+
+            <?php foreach ($rincianPengeluaran as $p) : ?>
+                <?php
+                $saldo -= (float)$p['jumlah'];
+                $komulatifPengeluaran += (float)$p['jumlah'];
+                ?>
+                <tr>
+                    <td><?= $nomor++; ?></td>
+                    <td><?= date('d-m-Y', strtotime($p['created_at'])); ?></td>
+                    <td class="text-left"><?= $p['deskripsi_pengeluaran']; ?></td>
+                    <td></td>
+                    <?php
+                    $pengeluaranCols = array_fill(1, $totalKolomPengeluaran, '');
+                    $colIndex = $kategoriColumnMap[$p['master_kategori_id']] ?? null;
+                    if ($colIndex) {
+                        $pengeluaranCols[$colIndex] = number_format($p['jumlah'], 0, ',', '.');
+                    }
+                    ?>
+                    <?php foreach ($pengeluaranCols as $nilai) : ?>
+                        <td class="text-right"><?= $nilai; ?></td>
+                    <?php endforeach; ?>
+                    <td class="text-right"><?= number_format($komulatifPengeluaran, 0, ',', '.'); ?></td>
+                    <td class="text-right"><?= number_format($saldo, 0, ',', '.'); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
+        <tfoot>
+            <tr class="font-bold">
+                <td colspan="3" class="text-left">Alokasi</td>
+                <td></td>
+                <?php
+                $alokasiFootCols = array_fill(1, $totalKolomPengeluaran, '');
+                foreach ($rincianAlokasi as $alokasi) {
+                    $colIndex = $kategoriColumnMap[$alokasi['master_kategori_id']] ?? null;
+                    if ($colIndex) {
+                        $alokasiFootCols[$colIndex] = number_format($alokasi['jumlah_alokasi'], 0, ',', '.');
+                    }
+                }
+                ?>
+                <?php foreach ($alokasiFootCols as $nilai) : ?>
+                    <td class="text-right"><?= $nilai; ?></td>
+                <?php endforeach; ?>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="font-bold">
+                <td colspan="3" class="text-left">Sisa Alokasi</td>
+                <td></td>
+                <?php
+                $sisaAlokasiCols = array_fill(1, $totalKolomPengeluaran, '');
+                foreach ($rincianAlokasi as $alokasi) {
+                    $colIndex = $kategoriColumnMap[$alokasi['master_kategori_id']] ?? null;
+                    if ($colIndex) {
+                        $sisaAlokasiCols[$colIndex] = number_format($alokasi['sisa_alokasi'], 0, ',', '.');
+                    }
+                }
+                ?>
+                <?php foreach ($sisaAlokasiCols as $nilai) : ?>
+                    <td class="text-right"><?= $nilai; ?></td>
+                <?php endforeach; ?>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="font-bold">
+                <td colspan="3" class="text-left">Jumlah Pengeluaran Bulan Ini</td>
+                <td colspan="<?= 1 + $totalKolomPengeluaran; ?>"></td>
+                <td class="text-right"><?= number_format($laporan['total_pengeluaran'], 0, ',', '.'); ?></td>
+                <td></td>
+            </tr>
+            <tr class="font-bold">
+                <td colspan="3" class="text-left">Sisa Saldo Bulan ini</td>
+                <td colspan="<?= 1 + $totalKolomPengeluaran; ?>"></td>
+                <td></td>
+                <td class="text-right"><?= number_format($laporan['saldo_akhir'], 0, ',', '.'); ?></td>
+            </tr>
+        </tfoot>
     </table>
 
-    <h4>C. Rincian Pendapatan</h4>
-    <table class="table mb-4">
-        <thead>
-            <tr>
-                <th>Jenis Pendapatan</th>
-                <th class="text-end">Jumlah</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($rincianPendapatan as $p): ?>
-                <tr>
-                    <td><?= esc($p['nama_pendapatan']); ?></td>
-                    <td class="text-end">Rp <?= number_format($p['jumlah'], 0, ',', '.'); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+    <div class="footer-section clearfix">
+        <div class="signature-block">
+            <p>Mengetahui,</p>
+            <p>Ketua BUMDES</p>
+            <div class="signature-space"></div>
+            <p><strong><u>(Nama Ketua)</u></strong></p>
+        </div>
+        <div class="signature-block right">
+            <p><?= $lokasi; ?>, <?= date('d ') . $namaBulan . date(' Y'); ?></p>
+            <p>Bendahara BUMDES</p>
+            <div class="signature-space"></div>
+            <p><strong><u>(Nama Bendahara)</u></strong></p>
+        </div>
+    </div>
 
-    <h4>D. Rincian Pengeluaran</h4>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Deskripsi</th>
-                <th>Kategori</th>
-                <th class="text-end">Jumlah</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($rincianPengeluaran as $p): ?>
-                <tr>
-                    <td><?= esc($p['deskripsi_pengeluaran']); ?></td>
-                    <td class="text-center"><span class="badge"><?= esc($p['nama_kategori']); ?></span></td>
-                    <td class="text-end">Rp <?= number_format($p['jumlah'], 0, ',', '.'); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
 </body>
 
 </html>

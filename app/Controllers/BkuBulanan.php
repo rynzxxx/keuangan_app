@@ -58,67 +58,136 @@ class BkuBulanan extends BaseController
      */
     public function cetakPdf($id = null)
     {
-        // 1. Ambil semua data yang dibutuhkan (termasuk data pengaturan)
+        // =======================================================================================
+        // BAGIAN INI DIAMBIL DAN DISESUAIKAN DARI FUNGSI cetakExcel
+        // =======================================================================================
+
+        // LANGKAH 1: Tambahkan Array Konfigurasi
+        // Peta untuk mendefinisikan hierarki kategori pengeluaran.
+        $konfigurasiHierarki = [
+            'OPERASIONAL PENGELOLAAN' => [
+                'KESEKRETARIATAN',
+                'PROMOSI'
+            ],
+            // Tambahkan induk lain jika ada di masa depan
+        ];
+
+        // LANGKAH 2: Ambil semua data yang dibutuhkan dari database
         $bkuModel = new BkuBulananModel();
         $detailPendapatanModel = new DetailPendapatanModel();
         $detailPengeluaranModel = new DetailPengeluaranModel();
         $masterKategoriModel = new MasterKategoriPengeluaranModel();
         $detailAlokasiModel = new DetailAlokasiModel();
-        $pengaturanModel = new PengaturanModel(); // Model baru
+        $pengaturanModel = new PengaturanModel();
 
         $laporan = $bkuModel->find($id);
         if (!$laporan) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Laporan BKU tidak ditemukan.');
         }
 
-        // Ambil semua rincian data
         $rincianPendapatan = $detailPendapatanModel->select('detail_pendapatan.*, master_pendapatan.nama_pendapatan')->join('master_pendapatan', 'master_pendapatan.id = detail_pendapatan.master_pendapatan_id')->where('detail_pendapatan.bku_id', $id)->findAll();
         $rincianPengeluaran = $detailPengeluaranModel->select('detail_pengeluaran.*, master_kategori_pengeluaran.nama_kategori')->join('master_kategori_pengeluaran', 'master_kategori_pengeluaran.id = detail_pengeluaran.master_kategori_id')->where('detail_pengeluaran.bku_id', $id)->findAll();
         $rincianAlokasi = $detailAlokasiModel->select('detail_alokasi.*, master_kategori_pengeluaran.nama_kategori')->join('master_kategori_pengeluaran', 'master_kategori_pengeluaran.id = detail_alokasi.master_kategori_id')->where('detail_alokasi.bku_id', $id)->findAll();
         $masterKategori = $masterKategoriModel->findAll();
 
-        // Ambil data untuk tanda tangan
         $ketua = $pengaturanModel->where('meta_key', 'ketua_bumdes')->first()['meta_value'] ?? 'NAMA KETUA';
         $bendahara = $pengaturanModel->where('meta_key', 'bendahara_bumdes')->first()['meta_value'] ?? 'NAMA BENDAHARA';
         $lokasi = $pengaturanModel->where('meta_key', 'lokasi_laporan')->first()['meta_value'] ?? 'LOKASI';
-
-        // Data nama bulan
         $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
         $namaBulan = $bulanIndonesia[(int)$laporan['bulan']];
 
-        // Siapkan semua data untuk dikirim ke view
+        // LANGKAH 3: Proses data untuk membuat struktur hierarki dan pemetaan kolom
+        $kategoriHierarki = [];
+        $kategoriColumnMap = []; // Peta dari ID kategori ke indeks kolomnya
+        $kategoriSudahDiProses = [];
+
+        // Buat peta nama kategori ke datanya untuk pencarian cepat
+        $kategoriByName = [];
+        foreach ($masterKategori as $kat) {
+            $kategoriByName[$kat['nama_kategori']] = $kat;
+        }
+
+        // Bangun struktur hierarki
+        foreach ($masterKategori as $kat) {
+            $namaKategori = $kat['nama_kategori'];
+            if (in_array($namaKategori, $kategoriSudahDiProses)) {
+                continue; // Lewati jika sudah diproses sebagai anak
+            }
+
+            // Cek apakah kategori ini adalah induk berdasarkan konfigurasi
+            if (isset($konfigurasiHierarki[$namaKategori])) {
+                $childrenData = [];
+                foreach ($konfigurasiHierarki[$namaKategori] as $namaAnak) {
+                    if (isset($kategoriByName[$namaAnak])) {
+                        $childrenData[] = $kategoriByName[$namaAnak];
+                        $kategoriSudahDiProses[] = $namaAnak; // Tandai sebagai sudah diproses
+                    }
+                }
+                $kat['children'] = $childrenData;
+                $kategoriHierarki[] = $kat;
+            }
+            // Hanya proses sebagai 'induk' mandiri jika bukan bagian dari konfigurasi
+            elseif (!in_array($namaKategori, $kategoriSudahDiProses)) {
+                $kat['children'] = [];
+                $kategoriHierarki[] = $kat;
+            }
+        }
+
+        // Hitung total kolom pengeluaran dan buat pemetaan kolom
+        $totalKolomPengeluaran = 0;
+        $columnIndex = 1; // Mulai dari indeks 1 untuk kolom pengeluaran
+        foreach ($kategoriHierarki as $kat) {
+            if (empty($kat['children'])) {
+                $totalKolomPengeluaran++;
+                $kategoriColumnMap[$kat['id']] = $columnIndex++;
+            } else {
+                foreach ($kat['children'] as $child) {
+                    $totalKolomPengeluaran++;
+                    $kategoriColumnMap[$child['id']] = $columnIndex++;
+                }
+            }
+        }
+
+        // Hitung total kolom keseluruhan pada tabel
+        // 4 kolom awal (No, Tgl, Uraian, Pendapatan) + total kolom pengeluaran + 2 kolom akhir (Komulatif, Saldo)
+        $totalKolomTabel = 4 + $totalKolomPengeluaran + 2;
+
+
+        // =======================================================================================
+        // AKHIR DARI BAGIAN YANG DIMODIFIKASI
+        // =======================================================================================
+
+        // LANGKAH 4: Siapkan semua data untuk dikirim ke view
         $data = [
             'laporan' => $laporan,
             'rincianPendapatan' => $rincianPendapatan,
             'rincianPengeluaran' => $rincianPengeluaran,
             'rincianAlokasi' => $rincianAlokasi,
-            'masterKategori' => $masterKategori, // Kirim master kategori ke view
             'ketua' => $ketua,
             'bendahara' => $bendahara,
             'lokasi' => $lokasi,
-            'namaBulan' => $namaBulan
+            'namaBulan' => $namaBulan,
+
+            // Data baru yang sudah diproses untuk layout
+            'kategoriHierarki' => $kategoriHierarki,
+            'kategoriColumnMap' => $kategoriColumnMap,
+            'totalKolomPengeluaran' => $totalKolomPengeluaran,
+            'totalKolomTabel' => $totalKolomTabel,
         ];
 
-        // 2. Siapkan nama file
+        // LANGKAH 5: Render view ke HTML menggunakan library Dompdf
         $filename = 'BKU_Bulanan_' . $namaBulan . '_' . $laporan['tahun'] . '.pdf';
-
-        // 3. Render view HTML ke dalam sebuah variabel
         $html = view('dashboard_keuangan/bku_bulanan/cetak_pdf', $data);
 
-        // 4. Inisialisasi library Dompdf
         $options = new \Dompdf\Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
-
-        // [PERUBAHAN] Ganti orientasi menjadi landscape
-        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->setPaper('A4', 'landscape'); // Orientasi landscape
         $dompdf->render();
-
-        // 5. Kirim file PDF ke browser untuk di-download
-        $dompdf->stream($filename, ['Attachment' => false]); // Attachment false untuk pratinjau
+        $dompdf->stream($filename, ['Attachment' => false]); // Tampilkan pratinjau
     }
 
     /**
