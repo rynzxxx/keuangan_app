@@ -133,19 +133,44 @@ class NeracaKeuangan extends BaseController
 
     public function cetakPdf($tahun = null)
     {
-        if (!$tahun) return redirect()->to('/neraca-keuangan');
+        if (!$tahun) {
+            return redirect()->to('/neraca-keuangan');
+        }
 
+        // 1. Ambil semua data yang dibutuhkan (logika sama dengan Excel)
         $data = $this->getNeracaData($tahun);
-        $data['title'] = "Laporan Neraca Keuangan Tahun {$tahun}";
+        $pengaturanModel = new PengaturanModel();
+        $ketua = $pengaturanModel->where('meta_key', 'ketua_bumdes')->first()['meta_value'] ?? 'NAMA KETUA';
+        $bendahara = $pengaturanModel->where('meta_key', 'bendahara_bumdes')->first()['meta_value'] ?? 'NAMA BENDAHARA';
+        $lokasi = $pengaturanModel->where('meta_key', 'lokasi_laporan')->first()['meta_value'] ?? 'LOKASI';
+        $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
 
-        $filename = 'Laporan_Neraca_' . $tahun . '.pdf';
-        $html = view('dashboard_keuangan/neraca_keuangan/cetak_pdf', $data);
+        // 2. Kumpulkan semua data untuk dikirim ke view
+        $viewData = [
+            'tahun' => $tahun,
+            'data' => $data, // Ini sudah berisi 'komponen', 'surplusDefisitDitahan', dll.
+            'ketua' => $ketua,
+            'bendahara' => $bendahara,
+            'lokasi' => $lokasi,
+            'bulanIndonesia' => $bulanIndonesia,
+        ];
 
-        $dompdf = new Dompdf();
+        // 3. Render view ke PDF menggunakan Dompdf
+        $filename = 'Laporan_Neraca_BUMDES_' . $tahun . '.pdf';
+
+        // Asumsi view ada di app/Views/neraca_keuangan/cetak_pdf.php
+        $html = view('dashboard_keuangan/neraca_keuangan/cetak_pdf', $viewData);
+
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->setPaper('A4', 'portrait'); // Layout potrait cukup untuk 2 kolom
         $dompdf->render();
-        $dompdf->stream($filename, ['Attachment' => true]);
+        $dompdf->stream($filename, ['Attachment' => false]);
+        exit();
     }
 
     /**

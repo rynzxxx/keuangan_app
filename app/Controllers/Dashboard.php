@@ -2,18 +2,16 @@
 
 namespace App\Controllers;
 
-use App\Controllers\BaseController;
+// use App\Controllers\BaseController; // Baris ini tidak wajib jika sudah di-extend
 use App\Models\BkuBulananModel;
 
 class Dashboard extends BaseController
 {
-
     public function index()
     {
         $db = \Config\Database::connect();
 
         // --- 1. Tentukan Rentang Waktu ---
-        // Ambil dari URL, jika tidak ada, atur default 1 tahun terakhir
         $tanggalMulai = $this->request->getGet('start_date') ?? date('Y-m-d', strtotime('-1 year'));
         $tanggalSelesai = $this->request->getGet('end_date') ?? date('Y-m-d');
 
@@ -36,6 +34,11 @@ class Dashboard extends BaseController
             $grafikLine['pengeluaran'][] = $laporan['total_pengeluaran'];
         }
 
+        // --- [BARU] Hitung Total Pendapatan dan Pengeluaran untuk Kartu Statistik ---
+        // Kita menggunakan data yang sudah ada dari $grafikLine agar lebih efisien
+        $totalPendapatan = array_sum($grafikLine['pendapatan']);
+        $totalPengeluaran = array_sum($grafikLine['pengeluaran']);
+
         // --- 3. Siapkan Data untuk Grafik Donat Pendapatan ---
         $builderPendapatan = $db->table('detail_pendapatan as dp');
         $builderPendapatan->select('mp.nama_pendapatan, SUM(dp.jumlah) as total');
@@ -56,14 +59,16 @@ class Dashboard extends BaseController
         $builderPengeluaran->groupBy('mkp.nama_kategori');
         $komponenPengeluaran = $builderPengeluaran->get()->getResultArray();
 
-        // Kirim semua data ke view
+        // --- [DIUBAH] Kirim semua data, termasuk total baru, ke view ---
         $data = [
             'title' => 'Dashboard Utama',
             'grafikLine' => $grafikLine,
             'komponenPendapatan' => $komponenPendapatan,
             'komponenPengeluaran' => $komponenPengeluaran,
             'tanggalMulai' => $tanggalMulai,
-            'tanggalSelesai' => $tanggalSelesai
+            'tanggalSelesai' => $tanggalSelesai,
+            'totalPendapatan'   => $totalPendapatan,   // Data baru untuk kartu statistik
+            'totalPengeluaran'  => $totalPengeluaran, // Data baru untuk kartu statistik
         ];
 
         return view('dashboard_keuangan/dashboard', $data);

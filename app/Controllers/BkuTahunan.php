@@ -81,6 +81,116 @@ class BkuTahunan extends BaseController
         ];
     }
 
+    public function cetakPdf($tahun = null)
+    {
+        if (!$tahun) {
+            return redirect()->to('/bku-tahunan');
+        }
+
+        // =======================================================================================
+        // LANGKAH 1: Ambil dan Proses Semua Data (Logika disalin dari cetakExcel)
+        // =======================================================================================
+        $hasil = $this->getLaporanTahunanData($tahun);
+        $pengaturanModel = new PengaturanModel();
+        $masterKategoriModel = new MasterKategoriPengeluaranModel();
+        $masterKategori = $masterKategoriModel->findAll();
+        $pengaturan = $pengaturanModel->getAllAsArray();
+
+        // Ambil semua data pengaturan untuk tanda tangan
+        $ketua = $pengaturan['ketua_bumdes'] ?? 'NAMA KETUA';
+        $bendahara = $pengaturan['bendahara_bumdes'] ?? 'NAMA BENDAHARA';
+        $lokasi = $pengaturan['lokasi_laporan'] ?? 'LOKASI';
+        $kepala_desa = $pengaturan['kepala_desa'] ?? 'Nama Kepala Desa';
+        $penasihat = $pengaturan['penasihat'] ?? 'Nama Penasihat';
+        $pengawas = $pengaturan['pengawas'] ?? 'Nama Pengawas';
+        $bulanIndonesia = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+
+        // Konfigurasi Hierarki & Setup Kolom Dinamis
+        $konfigurasiHierarki = ['OPERASIONAL PENGELOLAAN' => ['KESEKRETARIATAN', 'PROMOSI']];
+        $kategoriByName = array_column($masterKategori, null, 'nama_kategori');
+
+        $semuaAnakKategori = [];
+        foreach ($konfigurasiHierarki as $namaInduk => $children) {
+            $semuaAnakKategori = array_merge($semuaAnakKategori, $children);
+        }
+
+        $kategoriHierarki = [];
+        foreach ($masterKategori as $kat) {
+            $namaKategori = $kat['nama_kategori'];
+            if (in_array($namaKategori, $semuaAnakKategori)) {
+                continue;
+            }
+
+            if (isset($konfigurasiHierarki[$namaKategori])) {
+                $childrenData = [];
+                foreach ($konfigurasiHierarki[$namaKategori] as $namaAnak) {
+                    if (isset($kategoriByName[$namaAnak])) {
+                        $childrenData[] = $kategoriByName[$namaAnak];
+                    }
+                }
+                $kat['children'] = $childrenData;
+                $kategoriHierarki[] = $kat;
+            } else {
+                $kat['children'] = [];
+                $kategoriHierarki[] = $kat;
+            }
+        }
+
+        $totalKolomPengeluaran = 0;
+        $kategoriColumnMap = []; // Peta ini akan berisi urutan kolom yang benar
+        foreach ($kategoriHierarki as $parentKat) {
+            if (empty($parentKat['children'])) {
+                $totalKolomPengeluaran++;
+                $kategoriColumnMap[$parentKat['id']] = $parentKat;
+            } else {
+                foreach ($parentKat['children'] as $childKat) {
+                    $totalKolomPengeluaran++;
+                    $kategoriColumnMap[$childKat['id']] = $childKat;
+                }
+            }
+        }
+
+        $realisasiMap = array_column($hasil['pengeluaranPerKategori'], 'total_per_kategori', 'nama_kategori');
+
+        // =======================================================================================
+        // LANGKAH 2: Siapkan Data Untuk Dikirim ke View
+        // =======================================================================================
+        $data = [
+            'tahun' => $tahun,
+            'hasil' => $hasil,
+            'ketua' => $ketua,
+            'bendahara' => $bendahara,
+            'lokasi' => $lokasi,
+            'kepala_desa' => $kepala_desa,
+            'penasihat' => $penasihat,
+            'pengawas' => $pengawas,
+            'bulanIndonesia' => $bulanIndonesia,
+            'kategoriHierarki' => $kategoriHierarki,
+            'kategoriColumnMap' => $kategoriColumnMap,
+            'totalKolomPengeluaran' => $totalKolomPengeluaran,
+            'realisasiMap' => $realisasiMap,
+        ];
+
+        // =======================================================================================
+        // LANGKAH 3: Render View ke PDF menggunakan Dompdf
+        // =======================================================================================
+        $filename = 'Laporan_Tahunan_BUMDES_' . $tahun . '.pdf';
+
+        $html = view('dashboard_keuangan/bku_tahunan/cetak_pdf', $data);
+
+        $options = new \Dompdf\Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        // DIUBAH: Menggunakan A4 Landscape yang lebih umum dan sesuai untuk layout baru
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+        $dompdf->stream($filename, ['Attachment' => false]);
+        exit();
+    }
+
     /**
      * Mencetak laporan tahunan dalam format PDF
      */

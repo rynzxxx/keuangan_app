@@ -5,6 +5,12 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
+    input[readonly] {
+        background-color: #e9ecef; /* Warna abu-abu standar Bootstrap untuk field non-aktif */
+        cursor: not-allowed;      /* Mengubah cursor menjadi ikon 'dilarang' saat di-hover */
+        opacity: 1;               /* Memastikan field tidak terlihat pudar */
+    }
+
 #wrapper {
     display: flex;
     width: 100%;
